@@ -20,41 +20,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="1.0" />
 
-    <SeekBar
-        android:id="@+id/mspeed_right"
-        android:layout_width="158dp"
-        android:layout_height="16dp"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginTop="8dp"
-        android:max="20"
-        android:paddingEnd="24dp"
-        android:paddingStart="24dp"
-        android:progress="10"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.475" />
-
-    <SeekBar
-        android:id="@+id/mspeed_left"
-        android:layout_width="164dp"
-        android:layout_height="16dp"
-        android:layout_marginBottom="230dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:max="20"
-        android:paddingEnd="24dp"
-        android:paddingStart="24dp"
-        android:progress="10"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.117"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.891" />
-
     <TextView
         android:id="@+id/mtach_speed"
         android:layout_width="wrap_content"

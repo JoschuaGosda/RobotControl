@@ -1,5 +1,6 @@
 package com.example.joschua.robotcontrol;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Handler;
@@ -24,7 +25,7 @@ public class MainMenuActivity extends AppCompatActivity {
         CircleMenu circleMenu = (CircleMenu)findViewById(R.id.circle_menu);
         circleMenu.setMainMenu(Color.parseColor("#E0E0E0"),R.drawable.add, R.drawable.remove)
                 .addSubMenu(Color.parseColor("#009688"),R.drawable.settings)
-                .addSubMenu(Color.parseColor("#8BC34A"),R.drawable.playbutton_1)
+                //.addSubMenu(Color.parseColor("#8BC34A"),R.drawable.playbutton_1)
                 .addSubMenu(Color.parseColor("#2196F3"),R.drawable.bluetooth)
                 .setOnMenuSelectedListener(new OnMenuSelectedListener() {
                     @Override
@@ -34,7 +35,7 @@ public class MainMenuActivity extends AppCompatActivity {
                                 Toast.makeText(MainMenuActivity.this, "This may work in the future",
                                         Toast.LENGTH_SHORT).show();
                                 break;
-                            case 1:
+                            /*case 1:
                                 boolean mcontrol = new Handler().postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
@@ -42,12 +43,12 @@ public class MainMenuActivity extends AppCompatActivity {
                                         startActivity(mcontrol);
                                     }
                                 }, 1100);
-                                break;
-                            case 2:
+                                break;*/
+                            case 1:
                                 boolean mbluetooth = new Handler().postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        Intent mbluetooth = new Intent(getApplicationContext(), BluetoothActivity.class);
+                                        Intent mbluetooth = new Intent(getApplicationContext(), ScanActivity.class);
                                         startActivity(mbluetooth);
                                     }
                                 }, 1100);
