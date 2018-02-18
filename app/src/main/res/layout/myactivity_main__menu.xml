@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.joschua.robotcontrol.Main_Menu">
+    tools:context="com.example.joschua.robotcontrol.MainMenuActivity">
 
     <com.hitomi.cmlibrary.CircleMenu
         android:id="@+id/circle_menu"

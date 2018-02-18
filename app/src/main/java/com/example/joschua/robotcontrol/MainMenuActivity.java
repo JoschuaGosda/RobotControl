@@ -10,16 +10,16 @@ import android.widget.Toast;
 import com.hitomi.cmlibrary.CircleMenu;
 import com.hitomi.cmlibrary.OnMenuSelectedListener;
 
-public class Main_Menu extends AppCompatActivity {
+public class MainMenuActivity extends AppCompatActivity {
 
     String arrayName[] = {"Settings",
-                            "Control",
-                            "Bluetooth"};
+                            "myControlActivity",
+                            "BluetoothActivity"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main__menu);
+        setContentView(R.layout.myactivity_main__menu);
 
         CircleMenu circleMenu = (CircleMenu)findViewById(R.id.circle_menu);
         circleMenu.setMainMenu(Color.parseColor("#E0E0E0"),R.drawable.add, R.drawable.remove)
@@ -31,14 +31,14 @@ public class Main_Menu extends AppCompatActivity {
                     public void onMenuSelected(int index) {
                         switch (index){
                             case 0:
-                                Toast.makeText(Main_Menu.this, "This may work in the future",
+                                Toast.makeText(MainMenuActivity.this, "This may work in the future",
                                         Toast.LENGTH_SHORT).show();
                                 break;
                             case 1:
                                 boolean mcontrol = new Handler().postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        Intent mcontrol = new Intent(getApplicationContext(), Control.class);
+                                        Intent mcontrol = new Intent(getApplicationContext(), myControlActivity.class);
                                         startActivity(mcontrol);
                                     }
                                 }, 1100);
@@ -47,7 +47,7 @@ public class Main_Menu extends AppCompatActivity {
                                 boolean mbluetooth = new Handler().postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        Intent mbluetooth = new Intent(getApplicationContext(), Bluetooth.class);
+                                        Intent mbluetooth = new Intent(getApplicationContext(), BluetoothActivity.class);
                                         startActivity(mbluetooth);
                                     }
                                 }, 1100);

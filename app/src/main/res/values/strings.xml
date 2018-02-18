@@ -1,3 +1,11 @@
 <resources>
-    <string name="app_name">RobotControl</string>
+
+    <string name="refreshText">Pull Down to Refresh</string>
+
+    <string name="title_activity_control">ControlActivity</string>
+
+    <string name="no_ble">BLE not supported</string>
+
+    <!-- Misc items -->
+    <string name="zero">0</string>
 </resources>

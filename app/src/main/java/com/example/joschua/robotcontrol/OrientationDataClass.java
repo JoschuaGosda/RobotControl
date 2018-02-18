@@ -10,13 +10,13 @@ import android.hardware.SensorManager;
  * Created by josch on 07.02.2018.
  */
 
-public class OrientationData implements SensorEventListener {
+public class OrientationDataClass implements SensorEventListener {
     //static final float ALPHA = 0.01f;
     private SensorManager manager;
     private Sensor accelerometer;
     private Sensor magnometer;
     private Context mContext;
-    private Control.update mContext2;
+    private myControlActivity.update mContext2;
     private float[] accelOutput;
     private float[] magOutput;
     private float[] orientation = new float[3];
@@ -32,7 +32,7 @@ public class OrientationData implements SensorEventListener {
 
     public void newGame() { startOrientation = null;}
 
-    public OrientationData(Context mContext, Control.update mContext2) {
+    public OrientationDataClass(Context mContext, myControlActivity.update mContext2) {
         this.mContext = mContext;
         this.mContext2 = mContext2;
         manager = (SensorManager)mContext.getSystemService(Context.SENSOR_SERVICE);
@@ -80,8 +80,10 @@ public class OrientationData implements SensorEventListener {
         if ( output == null ) return input;
 
         for ( int i=0; i<input.length; i++ ) {
-            output[i] = output[i] + Constants.LOW_PASS_SENSITIVITY * (input[i] - output[i]);
+            output[i] = output[i] + ConstantsClass.LOW_PASS_SENSITIVITY * (input[i] - output[i]);
         }
         return output;
     }
+
+
 }
