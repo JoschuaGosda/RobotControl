@@ -34,6 +34,8 @@ public class myControlActivity extends AppCompatActivity {
     private static SeekBar mSpeedRightSeekBar;
     private static Switch mEnableRobotSwitch;
     private static Switch mEnableRightSwitch;
+    private boolean connected = false;
+    private boolean mIsBound = false;
 
     // This tag is used for debug messages
     private static final String TAG = myControlActivity.class.getSimpleName();
@@ -50,6 +52,7 @@ public class myControlActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             Log.i(TAG, "onServiceConnected");
+            connected = true;
             mPSoCBleRobotService = ((PSoCBleRobotService.LocalBinder) service).getService();
             if (!mPSoCBleRobotService.initialize()) {
                 Log.e(TAG, "Unable to initialize Bluetooth");
@@ -62,6 +65,7 @@ public class myControlActivity extends AppCompatActivity {
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             mPSoCBleRobotService = null;
+            connected = false;
         }
     };
 
@@ -75,9 +79,7 @@ public class myControlActivity extends AppCompatActivity {
         //mybutton = (Button) findViewById(R.id.myBtn);
         //roll = (TextView) findViewById(R.id.roll_value);
         //pitch = (TextView) findViewById(R.id.pitch_value);
-        mupdate = new update();
-        mupdate.start();
-        mBall = new DrawingBall(this);
+
         //setContentView(mBall);
         ////////////////////////insert/////////////////////////////////////
         //setContentView(R.layout.activity_control);
@@ -96,7 +98,8 @@ public class myControlActivity extends AppCompatActivity {
         // Bind to the BLE service
         Log.i(TAG, "Binding Service");
         Intent RobotServiceIntent = new Intent(this, PSoCBleRobotService.class);
-        bindService(RobotServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+
+        doBindService(RobotServiceIntent);
 
         /* This will be called when the left motor enable switch is changed */
         mEnableRobotSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -104,6 +107,10 @@ public class myControlActivity extends AppCompatActivity {
                 enableRobotSwitch(isChecked); //mod - ON/OFF beider motoren werden über einen knopf gesteuert
             }
         });
+
+        mupdate = new update();
+        mupdate.start();
+        mBall = new DrawingBall(this);
 
         /* This will be called when the right motor enable switch is changed
         mEnableRightSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -143,11 +150,30 @@ public class myControlActivity extends AppCompatActivity {
                 Log.d(TAG, "Right Speed Change to:" + speed);
             }
         });*/
+
     } /* End of onCreate method */
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+    public void doBindService(Intent RobotServiceIntent) {
+        // Establish a connection with the service.  We use an explicit
+        // class name because there is no reason to be able to let other
+        // applications replace our component.
+        bindService(RobotServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        mIsBound = true;
+        Log.d(TAG, "Service verbunden");
+    }
+
+    public void doUnbindService() {
+        if (mIsBound) {
+            unbindService(mServiceConnection);
+            mIsBound = false;
+            mPSoCBleRobotService = null;
+            Log.d(TAG, "Service ungebunden");
+        }
+    }
+
+   /* @Override
+    protected void onStart() {
+        super.onStart();
         registerReceiver(mRobotUpdateReceiver, makeRobotUpdateIntentFilter());
         if (mPSoCBleRobotService != null) {
             final boolean result = mPSoCBleRobotService.connect(mDeviceAddress);
@@ -156,16 +182,50 @@ public class myControlActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onRestart() {
+        super.onRestart();
+        registerReceiver(mRobotUpdateReceiver, makeRobotUpdateIntentFilter());
+        if (mPSoCBleRobotService != null) {
+            final boolean result = mPSoCBleRobotService.connect(mDeviceAddress);
+            Log.i(TAG, "Connect request result=" + result);
+        }
+    }
+*/
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(mRobotUpdateReceiver, makeRobotUpdateIntentFilter());
+        if (mPSoCBleRobotService != null) {
+            final boolean result = mPSoCBleRobotService.connect(mDeviceAddress);
+            Log.i(TAG, "Connect request result=" + result);
+            Log.d(TAG, "Receiver registered!!");
+        }
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
         unregisterReceiver(mRobotUpdateReceiver);
+        doUnbindService();
+        //unbindService(mServiceConnection);     //mod
+        //mPSoCBleRobotService = null;           //mod
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindService(mServiceConnection);
-        mPSoCBleRobotService = null;
+        doUnbindService();
+        //unbindService(mServiceConnection);
+        //mPSoCBleRobotService = null;
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        doUnbindService();
+        //unbindService(mServiceConnection);
+        //mPSoCBleRobotService = null;
     }
 
     /**
@@ -196,13 +256,13 @@ public class myControlActivity extends AppCompatActivity {
      //* @param angle is the motor to enable/disable (left or right)
      */
     private void enableRobotSwitch(boolean isChecked) {
-        if (isChecked) { // Turn on the specified motor
+        if (isChecked && connected && mIsBound) { // Turn on the specified motor
             mPSoCBleRobotService.setRobotState(true);
             //Log.d(TAG, (angle == PSoCBleRobotService.Angle.PITCH ? "Left" : "Right") + " Motor On");
-        } else { // turn off the specified motor
+        } else if (connected && mIsBound) { // turn off the specified motor
+            mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.PITCH, 127); // Force motor off
+            mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.ROLL, 127); // Force motor off
             mPSoCBleRobotService.setRobotState(false);
-            mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.PITCH, 0); // Force motor off
-            mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.ROLL, 0); // Force motor off
             /*if(angle == PSoCBleRobotService.Angle.PITCH) {
                 mSpeedLeftSeekBar.setProgress(10); // Move slider to middle position
             } else {
@@ -304,14 +364,14 @@ public class myControlActivity extends AppCompatActivity {
                 //Log.d(TAG, "roundedroll:" + roundedroll);
 
                 /* Scale the speed from what the seek bar provides to what the PSoC FW expects */
-                if(roundedpitch != roundedpitch_old){
+                if((roundedpitch != roundedpitch_old) && connected && mIsBound){
                     mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.PITCH, roundedpitch); //LEFT wird für Winkel benutzt
-                    Log.d(TAG, "Desired PITCH chanced to:" + roundedpitch);
+                    //Log.d(TAG, "Desired PITCH chanced to:" + roundedpitch);
                     roundedpitch_old = roundedpitch;
                 }
-                if(roundedroll != roundedroll_old){
+                if((roundedroll != roundedroll_old) && connected && mIsBound){
                     mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.ROLL, roundedroll);
-                    Log.d(TAG, "Desired ROLL chanced to:" + roundedroll);
+                    //Log.d(TAG, "Desired ROLL chanced to:" + roundedroll);
                     roundedroll_old = roundedroll;
                 }
 

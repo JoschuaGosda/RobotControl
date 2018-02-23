@@ -5,7 +5,7 @@ package com.example.joschua.robotcontrol;
  */
 
 public class ConstantsClass {
-    public static  float LOW_PASS_SENSITIVITY = 0.01f;
+    public static  float LOW_PASS_SENSITIVITY = 0.1f;
     public static final int CIRCLE_SMALL_RADIUS = 90;
     public static final int CIRCLE_STROKE_1 = 90;
     public static final int CIRCLE_STROKE_2 = 88;

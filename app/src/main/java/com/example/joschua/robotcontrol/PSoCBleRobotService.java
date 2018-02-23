@@ -289,8 +289,8 @@ public class PSoCBleRobotService extends Service {
 
         // Initialize car state variables
         RobotState = false;
-        pitchValue = 0;
-        rollValue = 0;
+        pitchValue = 127;
+        rollValue = 127;
 
         return true;
     }
@@ -371,16 +371,17 @@ public class PSoCBleRobotService extends Service {
                 if(state) {
                     mPitchCharacteristic.setValue(pitchValue, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
                 } else {
-                    mPitchCharacteristic.setValue(0, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
+                    mPitchCharacteristic.setValue(127, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
                 }
                 writeCharacteristic(mPitchCharacteristic);
+                //To Do: Nur einmal Werte schreiben, wenn Roboter nicht aktiviert ist
             }
         //} else { // Motor == RIGHT
             if (mRollCharacteristic != null) {
                 if(state) {
                     mRollCharacteristic.setValue(rollValue, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
                 } else {
-                    mRollCharacteristic.setValue(0, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
+                    mRollCharacteristic.setValue(127, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
                 }
                 writeCharacteristic(mRollCharacteristic);
             }
@@ -484,11 +485,11 @@ public class PSoCBleRobotService extends Service {
     /**
      * Get the tach reading for one of the motors
      *
-     * @param motor to operate on
+     * @param angle to operate on
      * @return tach value
      */
-    public static int getTach(Angle motor) {
-        if (motor == Angle.PITCH) {
+    public static int getTach(Angle angle) {
+        if (angle == Angle.PITCH) {
             return angleTach;
         } else { // Motor == RIGHT
             return speedTach;
