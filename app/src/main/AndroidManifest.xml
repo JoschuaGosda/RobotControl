@@ -11,6 +11,8 @@
     <!-- Location permission required for android 6.0 (Marshmallow) -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -28,7 +30,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".BluetoothActivity" />
+        <activity android:name=".TestActivity" />
         <activity
             android:name=".myControlActivity"
             android:screenOrientation="portrait"></activity>

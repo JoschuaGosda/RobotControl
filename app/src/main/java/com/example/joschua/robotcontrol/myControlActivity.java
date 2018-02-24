@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -76,9 +77,14 @@ public class myControlActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.myactivity_control);
 
+
+
         //mybutton = (Button) findViewById(R.id.myBtn);
         //roll = (TextView) findViewById(R.id.roll_value);
         //pitch = (TextView) findViewById(R.id.pitch_value);
+
+
+
 
         //setContentView(mBall);
         ////////////////////////insert/////////////////////////////////////
