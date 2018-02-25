@@ -80,7 +80,7 @@ public class OrientationDataClass implements SensorEventListener {
         if ( output == null ) return input;
 
         for ( int i=0; i<input.length; i++ ) {
-            output[i] = output[i] + ConstantsClass.LOW_PASS_SENSITIVITY * (input[i] - output[i]);
+            output[i] = output[i] + ConstantsClass.getLowPassSensitivity() * (input[i] - output[i]);
         }
         return output;
     }

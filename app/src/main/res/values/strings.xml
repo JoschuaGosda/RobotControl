@@ -10,4 +10,17 @@
 
     <!-- Misc items -->
     <string name="zero">0</string>
+    <string name="lighttheme">LightTheme</string>
+    <string name="darktheme">DarkTheme</string>
+    <string name="submit">SUBMIT</string>
+    <string name="themeheadline">Theme</string>
+    <string name="control_headline">Control Color</string>
+    <string name="dark_green_light_green">dark green/light green</string>
+    <string name="red_orange">red/orange</string>
+    <string name="indigo_pink">indigo/pink</string>
+    <string name="red_blue">red/blue</string>
+    <string name="ball_size_headline">Ball Size</string>
+    <string name="size_small">small</string>
+    <string name="size_medium">medium</string>
+    <string name="size_big">big</string>
 </resources>

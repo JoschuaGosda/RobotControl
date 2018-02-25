@@ -257,19 +257,19 @@ public class myControlActivity extends AppCompatActivity {
             //Log.d(TAG, "Sensordaten kommen an");
             if ((orientationData.getOrientation() != null) && (orientationData.getStartOrientation() != null)) {
                  mpitch = orientationData.getOrientation()[1] - orientationData.getStartOrientation()[1];
-                if(mpitch > ConstantsClass.MAX_SENSOR_VALUES){
-                    mpitch = (float) ConstantsClass.MAX_SENSOR_VALUES; //Begrenzung für die Steuerung auf Arduino
+                if(mpitch > ConstantsClass.getMaxSensorValues()){
+                    mpitch = (float) ConstantsClass.getMaxSensorValues(); //Begrenzung für die Steuerung auf Arduino
                 }
-                if(mpitch < -ConstantsClass.MAX_SENSOR_VALUES){
-                    mpitch = (float) -ConstantsClass.MAX_SENSOR_VALUES;
+                if(mpitch < -ConstantsClass.getMaxSensorValues()){
+                    mpitch = (float) -ConstantsClass.getMaxSensorValues();
                 }
 
                 mroll = orientationData.getOrientation()[2] - orientationData.getStartOrientation()[2];
-                if(mroll > ConstantsClass.MAX_SENSOR_VALUES){
-                    mroll = (float) ConstantsClass.MAX_SENSOR_VALUES;
+                if(mroll > ConstantsClass.getMaxSensorValues()){
+                    mroll = (float) ConstantsClass.getMaxSensorValues();
                 }
-                if(mroll < -ConstantsClass.MAX_SENSOR_VALUES){
-                    mroll = (float) -ConstantsClass.MAX_SENSOR_VALUES;
+                if(mroll < -ConstantsClass.getMaxSensorValues()){
+                    mroll = (float) -ConstantsClass.getMaxSensorValues();
                 }
 
                 roundedpitch = scaleAngle(mpitch);
@@ -312,10 +312,10 @@ public class myControlActivity extends AppCompatActivity {
         public DrawingBall (Context context){
             super(context);
             mPaint_small = new Paint();
-            mPaint_small.setColor(Color.parseColor(ConstantsClass.COLOR_SMALL_CIRCLE));
+            mPaint_small.setColor(Color.parseColor(ConstantsClass.getColorSmallCircle()));
             mPaint_small.setStyle(Paint.Style.FILL_AND_STROKE);
 
-            stroke1 = new Paint();
+            /*stroke1 = new Paint();
             stroke1.setStyle(Paint.Style.STROKE);
             stroke1.setStrokeWidth(1);
             stroke1.setColor(Color.parseColor(ConstantsClass.STROKE1_SMALL_CIRCLE));
@@ -323,10 +323,10 @@ public class myControlActivity extends AppCompatActivity {
             stroke2 = new Paint();
             stroke2.setStyle(Paint.Style.STROKE);
             stroke2.setStrokeWidth(1);
-            stroke2.setColor(Color.parseColor(ConstantsClass.STROKE2_SMALL_CIRCLE));
+            stroke2.setColor(Color.parseColor(ConstantsClass.STROKE2_SMALL_CIRCLE));*/
 
             mPaint_big = new Paint();
-            mPaint_big.setColor(Color.parseColor(ConstantsClass.COLOR_BIG_CIRCLE));
+            mPaint_big.setColor(Color.parseColor(ConstantsClass.getColorBigCircle()));
             mPaint_big.setStyle(Paint.Style.FILL);
         }
 
@@ -338,10 +338,10 @@ public class myControlActivity extends AppCompatActivity {
         }
 
         public void setCordinates (float x_data, float y_data) {
-            int x = (int) (y_data* ConstantsClass.CIRCLE_SENSITIVITY);
-            int y = (int) (x_data* ConstantsClass.CIRCLE_SENSITIVITY);
+            int x = (int) (y_data* ConstantsClass.getCircleSensitivity());
+            int y = (int) (x_data* ConstantsClass.getCircleSensitivity());
             float radius = (float) Math.hypot(x, y);
-            float radius_max = ConstantsClass.CIRCLE_BIG_RADIUS - ConstantsClass.CIRCLE_SMALL_RADIUS;
+            float radius_max = ConstantsClass.getCircleBigRadius() - ConstantsClass.getCircleSmallRadius();
             float theta = (float) Math.atan2(y, x);
 
             if(radius > radius_max){
@@ -365,10 +365,10 @@ public class myControlActivity extends AppCompatActivity {
             x_small_final = viewWidth/2 + x_small; //Werte bis jetzt nur in der Darstellung richtig
             y_small_final = viewHeight/2 - y_small; //für BluetoothActivity muss noch übertragen werden
 
-            canvas.drawCircle(viewWidth/2, viewHeight/2, ConstantsClass.CIRCLE_BIG_RADIUS, mPaint_big);
-            canvas.drawCircle(x_small_final, y_small_final, ConstantsClass.CIRCLE_SMALL_RADIUS, mPaint_small);
-            canvas.drawCircle(x_small_final, y_small_final, ConstantsClass.CIRCLE_STROKE_1, stroke1);
-            canvas.drawCircle(x_small_final, y_small_final, ConstantsClass.CIRCLE_STROKE_2, stroke2);
+            canvas.drawCircle(viewWidth/2, viewHeight/2, ConstantsClass.getCircleBigRadius(), mPaint_big);
+            canvas.drawCircle(x_small_final, y_small_final, ConstantsClass.getCircleSmallRadius(), mPaint_small);
+            //canvas.drawCircle(x_small_final, y_small_final, ConstantsClass.CIRCLE_STROKE_1, stroke1);
+            //canvas.drawCircle(x_small_final, y_small_final, ConstantsClass.CIRCLE_STROKE_2, stroke2);
             invalidate();
         }
     }
