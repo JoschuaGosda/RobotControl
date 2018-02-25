@@ -366,7 +366,6 @@ public class PSoCBleRobotService extends Service {
      */
     private void updateGattAngle( boolean state)
     {
-        //if(angle == Angle.PITCH) {
             if (mPitchCharacteristic != null) {
                 if(state) {
                     mPitchCharacteristic.setValue(pitchValue, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
@@ -374,9 +373,7 @@ public class PSoCBleRobotService extends Service {
                     mPitchCharacteristic.setValue(127, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
                 }
                 writeCharacteristic(mPitchCharacteristic);
-                //To Do: Nur einmal Werte schreiben, wenn Roboter nicht aktiviert ist
             }
-        //} else { // Motor == RIGHT
             if (mRollCharacteristic != null) {
                 if(state) {
                     mRollCharacteristic.setValue(rollValue, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
@@ -385,9 +382,8 @@ public class PSoCBleRobotService extends Service {
                 }
                 writeCharacteristic(mRollCharacteristic);
             }
-            Log.d(TAG, "Werte gesetzt! pitch:" + pitchValue + "      roll:" + rollValue);
+            //Log.d(TAG, "Werte gesetzt! pitch:" + pitchValue + "      roll:" + rollValue);
         }
-    //}
 
     /**
      * Request a write on a given {@code BluetoothGattCharacteristic}.
@@ -440,7 +436,6 @@ public class PSoCBleRobotService extends Service {
         }
     }
 
-
     /**
      * Turn a motor on/off
      *
@@ -448,16 +443,10 @@ public class PSoCBleRobotService extends Service {
      * @param state turn motor on or off
      */
     public void setRobotState( boolean state) {
-        // Update the motor state variable
-        //if(angle == Angle.PITCH)
-        //{
             RobotState = state;
-        //} else { // Motor == RIGHT
-        //    RobotState = state;
-        //}
-        // Update the Speed in the Gatt Database
         updateGattAngle(state);
     }
+
 
     /**
      * Set the speed setting of one of the motors.
@@ -470,11 +459,11 @@ public class PSoCBleRobotService extends Service {
      */
     public void setAngle(Angle angle, int value) {
         boolean state;
-        if(angle == Angle.PITCH) //LEFT wird für Winkel benutzt
+        if(angle == Angle.PITCH)
         {
             pitchValue = value;
             state = RobotState;
-        } else  { // Motor == RIGHT
+        } else  {
             rollValue = value;
             state = RobotState;
         }

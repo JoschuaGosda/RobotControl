@@ -30,7 +30,7 @@ public class OrientationDataClass implements SensorEventListener {
         return startOrientation;
     }
 
-    public void newGame() { startOrientation = null;}
+    public void Reset() { startOrientation = null;}
 
     public OrientationDataClass(Context mContext, myControlActivity.update mContext2) {
         this.mContext = mContext;

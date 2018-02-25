@@ -36,6 +36,9 @@ public class TestActivity extends AppCompatActivity {
 
         mrelativeLayout.addView(speedView);
 
+        LayoutInflater inflater = getLayoutInflater();
+        inflater.inflate(R.layout.test, mrelativeLayout, true);
+
         /*LayoutInflater mInflator = getLayoutInflater();
         Switch mSwitch = (Switch) mInflator.inflate(R.layout.test, mrelativeLayout);
         //mrelativeLayout.addView(mSwitch);
