@@ -21,18 +21,18 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class myControlActivity extends AppCompatActivity {
     private static final double VALUE_INTERVAL = 0.5;
-    OrientationDataClass orientationData;
-    update mupdate;
 
-    private DrawingBall mBall = null;
     //////////////////////////insert/////////////////////////////////////////////////////////
     // Objects to access the layout items for Tach, Buttons, and Seek bars
     private static TextView mTachAngleText;
     private static TextView mTachSpeedText;
     private static Switch mEnableRobotSwitch;
+    private static SeekBar mThrottleSeekBar;
+    private static SeekBar mTurnSeekBar;
     private boolean connected = false;
     private boolean mIsBound = false;
     private boolean control_activated = false;
@@ -73,27 +73,14 @@ public class myControlActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        RelativeLayout mrelativeLayout = new RelativeLayout(this);
-        RelativeLayout.LayoutParams mrelativeParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.MATCH_PARENT,
-                RelativeLayout.LayoutParams.MATCH_PARENT
-        );
-        mrelativeLayout.setLayoutParams(mrelativeParams);
-        setContentView(mrelativeLayout);
-
-        LayoutInflater inflater = getLayoutInflater();
-        inflater.inflate(R.layout.myactivity_control, mrelativeLayout, true);
-
-
-        mBall = new DrawingBall(this);
-
-        mrelativeLayout.addView(mBall);
+        setContentView(R.layout.myactivity_control_v2);
 
         // Assign the various layout objects to the appropriate variables
         mTachAngleText = (TextView) findViewById(R.id.mtach_angle);
         mTachSpeedText = (TextView) findViewById(R.id.mtach_speed);
-        mEnableRobotSwitch = (Switch) findViewById(R.id.menable_robot);
+        mEnableRobotSwitch = (Switch) findViewById(R.id.menable_robot2);
+        mThrottleSeekBar = (SeekBar) findViewById(R.id.throttle);
+        mTurnSeekBar = (SeekBar) findViewById(R.id.turn);
 
         final Intent intent = getIntent();
         mDeviceAddress = intent.getStringExtra(ScanActivity.EXTRAS_BLE_ADDRESS);
@@ -109,12 +96,55 @@ public class myControlActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 enableRobotSwitch(isChecked); //mod - ON/OFF beider motoren werden über einen knopf gesteuert
                 control_activated = isChecked;
-                orientationData.Reset();
+                //orientationData.Reset();
             }
         });
 
-        mupdate = new update();
-        mupdate.start();
+        mThrottleSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                //tv.setTextSize(progress*5);
+                //tv_left.setText(progress + "");
+                if(control_activated) {
+                        mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.PITCH, progress); //LEFT wird für Winkel benutzt
+                        //Log.d(TAG, "Desired PITCH chanced to:" + roundedpitch);
+                    }
+                }
+
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                mThrottleSeekBar.setProgress(127);
+            }
+        });
+
+        mTurnSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                //tv.setTextSize(progress*5);
+                //tv_left.setText(progress + "");
+                if (control_activated) {
+                    mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.ROLL, progress);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                mTurnSeekBar.setProgress(127);
+            }
+        });
     } /* End of onCreate method */
 
     public void doBindService(Intent RobotServiceIntent) {
@@ -166,24 +196,6 @@ public class myControlActivity extends AppCompatActivity {
     }
 
     /**
-     * @param speed Input speed from the slider
-     * @return scaled value of the speed
-     */
-    private int scaleSpeed(int speed) {
-        final int SCALE = 10;
-        final int OFFSET = 100;
-
-        return ((speed * SCALE) - OFFSET);
-    }
-
-    private int scaleAngle(float angle) {
-        final int SCALE = 255; //werte von Sensor zwischen 0,5 und -0,5 --> Winkel von 20 bis -20°
-        final float OFFSET = (float) 0.5;
-        int result = (int) Math.round((angle + OFFSET)* SCALE) ;
-        return result;
-    }
-
-    /**
      * Enable or disable the left/right motor
      *
      * @param isChecked used to enable/disable motor
@@ -206,6 +218,8 @@ public class myControlActivity extends AppCompatActivity {
      * ACTION_DATA_AVAILABLE: received data from the car.  This can be a result of a read
      * or notify operation.
      */
+
+    ///////////
     private final BroadcastReceiver mRobotUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -238,138 +252,5 @@ public class myControlActivity extends AppCompatActivity {
         intentFilter.addAction(PSoCBleRobotService.ACTION_DISCONNECTED);
         intentFilter.addAction(PSoCBleRobotService.ACTION_DATA_AVAILABLE);
         return intentFilter;
-    }
-
-    public class update  {
-
-        float mpitch, mroll;
-        int roundedpitch, roundedroll;
-        int roundedpitch_old, roundedroll_old;
-
-        public update(){}
-
-        public void start()
-        {
-            orientationData = new OrientationDataClass(myControlActivity.this, update.this);
-            orientationData.register();
-        }
-        public void sendData(){
-            //Log.d(TAG, "Sensordaten kommen an");
-            if ((orientationData.getOrientation() != null) && (orientationData.getStartOrientation() != null)) {
-                 mpitch = orientationData.getOrientation()[1] - orientationData.getStartOrientation()[1];
-                if(mpitch > ConstantsClass.getMaxSensorValues()){
-                    mpitch = (float) ConstantsClass.getMaxSensorValues(); //Begrenzung für die Steuerung auf Arduino
-                }
-                if(mpitch < -ConstantsClass.getMaxSensorValues()){
-                    mpitch = (float) -ConstantsClass.getMaxSensorValues();
-                }
-
-                mroll = orientationData.getOrientation()[2] - orientationData.getStartOrientation()[2];
-                if(mroll > ConstantsClass.getMaxSensorValues()){
-                    mroll = (float) ConstantsClass.getMaxSensorValues();
-                }
-                if(mroll < -ConstantsClass.getMaxSensorValues()){
-                    mroll = (float) -ConstantsClass.getMaxSensorValues();
-                }
-
-                roundedpitch = scaleAngle(mpitch);
-                roundedroll = scaleAngle(mroll);
-
-                //Log.d(TAG, "roundedpitch:" + roundedpitch);
-                //Log.d(TAG, "roundedroll:" + roundedroll);
-
-                /* Scale the speed from what the seek bar provides to what the PSoC FW expects */
-                if(control_activated) {
-                    if ((roundedpitch != roundedpitch_old) && connected && mIsBound) {
-                        mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.PITCH, roundedpitch); //LEFT wird für Winkel benutzt
-                        //Log.d(TAG, "Desired PITCH chanced to:" + roundedpitch);
-                        roundedpitch_old = roundedpitch;
-                    }
-                    if ((roundedroll != roundedroll_old) && connected && mIsBound) {
-                        mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.ROLL, roundedroll);
-                        //Log.d(TAG, "Desired ROLL chanced to:" + roundedroll);
-                        roundedroll_old = roundedroll;
-                    }
-                }
-                mBall.setCordinates(mpitch, mroll);
-            }
-        }
-    }
-
-    public class DrawingBall extends View{
-
-        private Paint mPaint_small;
-        private Paint stroke1;
-        private Paint stroke2;
-        private Paint mPaint_big;
-        private int x_small = 0;
-        private int y_small = 0;
-        private int x_small_final;
-        private int y_small_final;
-        private int viewWidth;
-        private int viewHeight;
-
-        public DrawingBall (Context context){
-            super(context);
-            mPaint_small = new Paint();
-            mPaint_small.setColor(Color.parseColor(ConstantsClass.getColorSmallCircle()));
-            mPaint_small.setStyle(Paint.Style.FILL_AND_STROKE);
-
-            /*stroke1 = new Paint();
-            stroke1.setStyle(Paint.Style.STROKE);
-            stroke1.setStrokeWidth(1);
-            stroke1.setColor(Color.parseColor(ConstantsClass.STROKE1_SMALL_CIRCLE));
-
-            stroke2 = new Paint();
-            stroke2.setStyle(Paint.Style.STROKE);
-            stroke2.setStrokeWidth(1);
-            stroke2.setColor(Color.parseColor(ConstantsClass.STROKE2_SMALL_CIRCLE));*/
-
-            mPaint_big = new Paint();
-            mPaint_big.setColor(Color.parseColor(ConstantsClass.getColorBigCircle()));
-            mPaint_big.setStyle(Paint.Style.FILL);
-        }
-
-        @Override
-        protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-            super.onSizeChanged(w, h, oldw, oldh);
-            viewWidth = w;
-            viewHeight = h;
-        }
-
-        public void setCordinates (float x_data, float y_data) {
-            int x = (int) (y_data* ConstantsClass.getCircleSensitivity());
-            int y = (int) (x_data* ConstantsClass.getCircleSensitivity());
-            float radius = (float) Math.hypot(x, y);
-            float radius_max = ConstantsClass.getCircleBigRadius() - ConstantsClass.getCircleSmallRadius();
-            float theta = (float) Math.atan2(y, x);
-
-            if(radius > radius_max){
-                radius = radius_max;
-            }
-
-            if (control_activated) {
-                x_small = (int) (radius * Math.cos(theta));
-                y_small = (int) (radius * Math.sin(theta));
-            }
-            else{
-                x_small = 0;
-                y_small = 0;
-            }
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
-
-            x_small_final = viewWidth/2 + x_small; //Werte bis jetzt nur in der Darstellung richtig
-            y_small_final = viewHeight/2 - y_small; //für BluetoothActivity muss noch übertragen werden
-
-            canvas.drawCircle(viewWidth/2, viewHeight/2, ConstantsClass.getCircleBigRadius(), mPaint_big);
-            canvas.drawCircle(x_small_final, y_small_final, ConstantsClass.getCircleSmallRadius(), mPaint_small);
-            //canvas.drawCircle(x_small_final, y_small_final, ConstantsClass.CIRCLE_STROKE_1, stroke1);
-            //canvas.drawCircle(x_small_final, y_small_final, ConstantsClass.CIRCLE_STROKE_2, stroke2);
-            invalidate();
-        }
     }
 }

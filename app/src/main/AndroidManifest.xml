@@ -31,12 +31,12 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".TestActivity" />
-
         <activity
             android:name=".myControlActivity"
             android:screenOrientation="landscape" />
-        <activity android:name=".ScanActivity" />
+
+        <activity android:name=".ScanActivity"
+            android:screenOrientation="landscape"/>
 
         <service android:name=".PSoCBleRobotService" />
 

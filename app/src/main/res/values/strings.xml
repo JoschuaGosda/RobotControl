@@ -25,4 +25,6 @@
     <string name="size_big">big</string>
     <string name="angle">Angle [°]</string>
     <string name="speed_m_s">Speed [m/s]</string>
+    <string name="welcome">Welcome</string>
+    <string name="to_roboboy">to RoboBoy</string>
 </resources>
