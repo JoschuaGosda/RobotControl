@@ -22,21 +22,24 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainMenuActivity"
-            android:screenOrientation="portrait">
+            android:name=".WelcomeActivity"
+            android:screenOrientation="landscape">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity android:name=".TestActivity" />
+
         <activity
             android:name=".myControlActivity"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="landscape" />
         <activity android:name=".ScanActivity" />
 
         <service android:name=".PSoCBleRobotService" />
+
     </application>
 
 </manifest>

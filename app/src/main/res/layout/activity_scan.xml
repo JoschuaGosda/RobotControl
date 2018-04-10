@@ -50,9 +50,10 @@ http://www.cypress.com/products/bluetooth-low-energy-ble
 
         <ListView
             android:id="@+id/BlelistItems"
-            android:layout_margin="5dp"
+            style="@style/Widget.AppCompat.ListView.Menu++"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent"
+            android:layout_margin="5dp" />
 
     </LinearLayout>
 </android.support.v4.widget.SwipeRefreshLayout>

@@ -23,4 +23,6 @@
     <string name="size_small">small</string>
     <string name="size_medium">medium</string>
     <string name="size_big">big</string>
+    <string name="angle">Angle [°]</string>
+    <string name="speed_m_s">Speed [m/s]</string>
 </resources>
