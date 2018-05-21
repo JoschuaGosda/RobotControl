@@ -6,43 +6,36 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class myControlActivity extends AppCompatActivity {
-    private static final double VALUE_INTERVAL = 0.5;
 
-    //////////////////////////insert/////////////////////////////////////////////////////////
+
     // Objects to access the layout items for Tach, Buttons, and Seek bars
     private static TextView mTachAngleText;
     private static TextView mTachSpeedText;
     private static Switch mEnableRobotSwitch;
     private static SeekBar mThrottleSeekBar;
     private static SeekBar mTurnSeekBar;
-    private boolean connected = false;
-    private boolean mIsBound = false;
-    private boolean control_activated = false;
-    private static int counter = 0;
+    private boolean connected = false;  //turns true when service is conntected - false if disconnected
+    private boolean bound = false;      //turns true when activity is bound to service
+    private boolean online = false;     //turns true when enableSwitch is checked
 
     // This tag is used for debug messages
     private static final String TAG = myControlActivity.class.getSimpleName();
 
     private static String mDeviceAddress;
     private static PSoCBleRobotService mPSoCBleRobotService;
+
+
 
     /**
      * This manages the lifecycle of the BLE service.
@@ -60,7 +53,7 @@ public class myControlActivity extends AppCompatActivity {
                 finish();
             }
             // Automatically connects to the car database upon successful start-up initialization.
-            mPSoCBleRobotService.connect(mDeviceAddress);
+            mPSoCBleRobotService.connect(mDeviceAddress); //by function connect the start values of THROTTLE and TURN are automatically set to 127 (==0)
         }
 
         @Override
@@ -73,12 +66,12 @@ public class myControlActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.myactivity_control_v2);
+        setContentView(R.layout.activity_control);
 
         // Assign the various layout objects to the appropriate variables
         mTachAngleText = (TextView) findViewById(R.id.mtach_angle);
         mTachSpeedText = (TextView) findViewById(R.id.mtach_speed);
-        mEnableRobotSwitch = (Switch) findViewById(R.id.menable_robot2);
+        mEnableRobotSwitch = (Switch) findViewById(R.id.enableRobot);
         mThrottleSeekBar = (SeekBar) findViewById(R.id.throttle);
         mTurnSeekBar = (SeekBar) findViewById(R.id.turn);
 
@@ -91,23 +84,20 @@ public class myControlActivity extends AppCompatActivity {
 
         doBindService(RobotServiceIntent);
 
-        /* This will be called when the left motor enable switch is changed */
+        /* This will be called when the  robot enable switch is changed */
         mEnableRobotSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                enableRobotSwitch(isChecked); //mod - ON/OFF beider motoren werden über einen knopf gesteuert
-                control_activated = isChecked;
-                //orientationData.Reset();
+                enableRobotSwitch(isChecked); //updates the stateFlag for sharing data
+                online = isChecked;
             }
         });
 
         mThrottleSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                //tv.setTextSize(progress*5);
-                //tv_left.setText(progress + "");
-                if(control_activated) {
-                        mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.PITCH, progress); //LEFT wird für Winkel benutzt
-                        //Log.d(TAG, "Desired PITCH chanced to:" + roundedpitch);
+                if(online) {
+                        mPSoCBleRobotService.setVelocity(PSoCBleRobotService.Velocity.THROTTLE, progress); //LEFT wird für Winkel benutzt
+                        //Log.d(TAG, "Desired THROTTLE chanced to:" + roundedTHROTTLE);
                     }
                 }
 
@@ -127,10 +117,8 @@ public class myControlActivity extends AppCompatActivity {
         mTurnSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                //tv.setTextSize(progress*5);
-                //tv_left.setText(progress + "");
-                if (control_activated) {
-                    mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.ROLL, progress);
+                if (online) {
+                    mPSoCBleRobotService.setVelocity(PSoCBleRobotService.Velocity.TURN, progress);
                 }
             }
 
@@ -152,14 +140,14 @@ public class myControlActivity extends AppCompatActivity {
         // class name because there is no reason to be able to let other
         // applications replace our component.
         bindService(RobotServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
-        mIsBound = true;
+        bound = true;
         Log.d(TAG, "Service verbunden");
     }
 
     public void doUnbindService() {
-        if (mIsBound) {
+        if (bound) {
             unbindService(mServiceConnection);
-            mIsBound = false;
+            bound = false;
             mPSoCBleRobotService = null;
             Log.d(TAG, "Service ungebunden");
         }
@@ -174,6 +162,13 @@ public class myControlActivity extends AppCompatActivity {
             Log.i(TAG, "Connect request result=" + result);
             Log.d(TAG, "Receiver registered!!");
         }
+        //doBindService(RobotServiceIntent);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        doUnbindService();
     }
 
     @Override
@@ -202,39 +197,43 @@ public class myControlActivity extends AppCompatActivity {
      //* @param angle is the motor to enable/disable (left or right)
      */
     private void enableRobotSwitch(boolean isChecked) {
-        if (isChecked && connected && mIsBound) { // Turn on the specified motor
+        if (isChecked && connected && bound) {
             mPSoCBleRobotService.setRobotState(true);
-        } else if (connected && mIsBound && counter == 0) { // turn off the specified motor
-            mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.PITCH, 127); // Force neutral PITCH value
-            mPSoCBleRobotService.setAngle(PSoCBleRobotService.Angle.ROLL, 127); // Force neutral ROLL value
+            //mPSoCBleRobotService.setVelocity(PSoCBleRobotService.Velocity.THROTTLE, 127);
+            //mPSoCBleRobotService.setVelocity(PSoCBleRobotService.Velocity.TURN, 127);
+        }
+        else if(connected && bound){
             mPSoCBleRobotService.setRobotState(false);
         }
     }
 
     /**
      * Handle broadcasts from the Car service object. The events are:
-     * ACTION_CONNECTED: connected to the car.
-     * ACTION_DISCONNECTED: disconnected from the car.
-     * ACTION_DATA_AVAILABLE: received data from the car.  This can be a result of a read
+     * ACTION_CONNECTED: connected to the segway.
+     * ACTION_DISCONNECTED: disconnected from the segway.
+     * ACTION_DATA_AVAILABLE: received data from the segway.  This can be a result of a read
      * or notify operation.
      */
 
-    ///////////
     private final BroadcastReceiver mRobotUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             switch (action) {
                 case PSoCBleRobotService.ACTION_CONNECTED:
-                    // No need to do anything here. Service discovery is started by the service.
+                    //Service discovery is started by the service.
+                    //Toast conntected = Toast.makeText(myControlActivity.this, "succesfully connected", Toast.LENGTH_LONG);
+                    //conntected.show();
                     break;
                 case PSoCBleRobotService.ACTION_DISCONNECTED:
+                    Toast disconntected = Toast.makeText(myControlActivity.this, "disconnected - Service will be closed", Toast.LENGTH_LONG);
+                    disconntected.show();
                     mPSoCBleRobotService.close();
                     break;
                 case PSoCBleRobotService.ACTION_DATA_AVAILABLE:
                     // This is called after a Notify completes
-                    mTachAngleText.setText(String.format("%d", PSoCBleRobotService.getTach(PSoCBleRobotService.Angle.PITCH)));
-                    mTachSpeedText.setText(String.format("%d", PSoCBleRobotService.getTach(PSoCBleRobotService.Angle.ROLL)));
+                    mTachAngleText.setText(String.format("%.2f", PSoCBleRobotService.getTach(PSoCBleRobotService.Velocity.THROTTLE)));
+                    mTachSpeedText.setText(String.format("%.2f", PSoCBleRobotService.getTach(PSoCBleRobotService.Velocity.TURN)));
                     break;
             }
         }

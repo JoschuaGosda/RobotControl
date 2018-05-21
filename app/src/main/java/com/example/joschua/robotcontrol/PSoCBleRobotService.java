@@ -57,7 +57,7 @@ public class PSoCBleRobotService extends Service {
 
     private final static String TAG = PSoCBleRobotService.class.getSimpleName();
 
-    public enum Angle { PITCH, ROLL }
+    public enum Velocity { THROTTLE, TURN }
 
     private static BluetoothManager mBluetoothManager;
     private static BluetoothAdapter mBluetoothAdapter;
@@ -71,25 +71,26 @@ public class PSoCBleRobotService extends Service {
     // UUID for the custom motor characteristics
     private static final String baseUUID =           "00000000-0000-1000-8000-00805f9b34f";
     private static final String motorServiceUUID =   baseUUID + "0";
-    private static final String RollCharUUID =  baseUUID + "1";
-    private static final String PitchCharUUID = baseUUID + "2";
+    private static final String TurnCharUUID =  baseUUID + "1";
+    private static final String ThrottleCharUUID = baseUUID + "2";
     private static final String tachAngleCharUUID =   baseUUID + "3";
     private static final String tachSpeedCharUUID =  baseUUID + "4";
     private static final String CCCD_UUID =          "00002902-0000-1000-8000-00805f9b34fb";
 
     // BluetoothActivity Characteristics that we need to read/write
-    private static BluetoothGattCharacteristic mPitchCharacteristic;
-    private static BluetoothGattCharacteristic mRollCharacteristic;
+    private static BluetoothGattCharacteristic mThrottleCharacteristic;
+    private static BluetoothGattCharacteristic mTurnCharacteristic;
     private static BluetoothGattCharacteristic mTachAngleCharacteristic;
     private static BluetoothGattCharacteristic mTachSpeedCharacteristic;
 
     // State (on/off), speed of the motors, and tach values
     private static boolean RobotState;
-    private static boolean motorRightSta;
-    private static int pitchValue = 10;
-    private static int rollValue = 11;
-    private static int angleTach;
-    private static int speedTach;
+    private static int throttleValue;
+    private static int turnValue;
+    private static int rawAngleTach;
+    private static float angleTach;
+    private static int rawSpeedTach;
+    private static float speedTach;
 
     // Actions used during broadcasts to the activity
     public static final String ACTION_CONNECTED =
@@ -150,9 +151,7 @@ public class PSoCBleRobotService extends Service {
 
         /**
          * This is called when service discovery has completed.
-         *
          * It broadcasts an update to the main activity.
-         *
          * @param gatt The GATT database object
          * @param status Status of whether the discovery was successful.
          */
@@ -163,8 +162,8 @@ public class PSoCBleRobotService extends Service {
                 // Get the characteristics for the motor service
                 BluetoothGattService gattService = mBluetoothGatt.getService(UUID.fromString(motorServiceUUID));
                 if (gattService == null) return; // return if the motor service is not supported
-                mPitchCharacteristic = gattService.getCharacteristic(UUID.fromString(RollCharUUID));
-                mRollCharacteristic = gattService.getCharacteristic(UUID.fromString(PitchCharUUID));
+                mThrottleCharacteristic = gattService.getCharacteristic(UUID.fromString(ThrottleCharUUID));
+                mTurnCharacteristic = gattService.getCharacteristic(UUID.fromString(TurnCharUUID));
                 mTachAngleCharacteristic = gattService.getCharacteristic(UUID.fromString(tachAngleCharUUID));
                 mTachSpeedCharacteristic = gattService.getCharacteristic(UUID.fromString(tachSpeedCharUUID));
 
@@ -194,7 +193,6 @@ public class PSoCBleRobotService extends Service {
         /**
          * This is called when a characteristic write has completed. Is uses a queue to determine if
          * additional BLE actions are still pending and launches the next one if there are.
-         *
          * @param gatt The GATT database object
          * @param characteristic The characteristic that was written.
          * @param status Status of whether the write was successful.
@@ -242,10 +240,14 @@ public class PSoCBleRobotService extends Service {
             // Update the appropriate variable with the new value.
             switch (uuid) {
                 case tachAngleCharUUID:
-                    angleTach = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0); /////////////////mod!!
+                    rawAngleTach = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0);
+                    //Transformation corresponding to Arduino data processing
+                    angleTach = (float) (((float)rawAngleTach*61)/255) - 30;
                     break;
                 case tachSpeedCharUUID:
-                    speedTach = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0);
+                    rawSpeedTach = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0);
+                    //Transformation corresponding to Arduino data processing
+                    speedTach = (float) ((float) (((double)rawSpeedTach*7)/255) - 2.96);
                     break;
             }
             // Tell the activity that new car data is available
@@ -256,7 +258,6 @@ public class PSoCBleRobotService extends Service {
 
     /**
      * Sends a broadcast to the listener in the main activity.
-     *
      * @param action The type of action that occurred.
      */
     private void broadcastUpdate(final String action) {
@@ -267,7 +268,6 @@ public class PSoCBleRobotService extends Service {
 
     /**
      * Initialize a reference to the local BluetoothActivity adapter.
-     *
      * @return Return true if the initialization is successful.
      */
     public boolean initialize() {
@@ -286,18 +286,16 @@ public class PSoCBleRobotService extends Service {
             Log.e(TAG, "Unable to obtain a BluetoothAdapter.");
             return false;
         }
-
-        // Initialize car state variables
+        // Initialize robot state variables
         RobotState = false;
-        pitchValue = 127;
-        rollValue = 127;
+        throttleValue = 127;
+        turnValue = 127;
 
         return true;
     }
 
     /**
      * Connects to the GATT server hosted on the BluetoothActivity LE device.
-     *
      * @param address The device address of the destination device.
      * @return Return true if the connection is initiated successfully. The connection result
      * is reported asynchronously through the
@@ -327,6 +325,9 @@ public class PSoCBleRobotService extends Service {
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
         Log.i(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
+
+
+
         return true;
     }
 
@@ -357,32 +358,30 @@ public class PSoCBleRobotService extends Service {
     }
 
     /**
-     * Update the speed of the motor in the GATT database or turn off motor. the speed
-     * value comes from the global variables motorLeftSpeed or motorRightSpeed which are
-     * set by the setMotorSpeed function.
-     *
-     * //@param angle to write (pitch or roll)
+     * Update the speed of the GATT database. the speed
+     * value comes from the global variables turnValue or throttleValue which are
+     * set by the setVelocity function.
      * @param state determines if motor is on or off
      */
-    private void updateGattAngle( boolean state)
+    private void updateGattVelocity( boolean state)
     {
-            if (mPitchCharacteristic != null) {
+            if (mThrottleCharacteristic != null) {
                 if(state) {
-                    mPitchCharacteristic.setValue(pitchValue, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
+                    mThrottleCharacteristic.setValue(throttleValue, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
                 } else {
-                    mPitchCharacteristic.setValue(127, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
+                    mThrottleCharacteristic.setValue(127, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
                 }
-                writeCharacteristic(mPitchCharacteristic);
+                writeCharacteristic(mThrottleCharacteristic);
             }
-            if (mRollCharacteristic != null) {
+            if (mTurnCharacteristic != null) {
                 if(state) {
-                    mRollCharacteristic.setValue(rollValue, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
+                    mTurnCharacteristic.setValue(turnValue, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
                 } else {
-                    mRollCharacteristic.setValue(127, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
+                    mTurnCharacteristic.setValue(127, BluetoothGattCharacteristic.FORMAT_SINT8, 0);
                 }
-                writeCharacteristic(mRollCharacteristic);
+                writeCharacteristic(mTurnCharacteristic);
             }
-            //Log.d(TAG, "Werte gesetzt! pitch:" + pitchValue + "      roll:" + rollValue);
+            //Log.d(TAG, "Werte gesetzt! THROTTLE:" + throttleValue + "      TURN:" + turnValue);
         }
 
     /**
@@ -403,7 +402,7 @@ public class PSoCBleRobotService extends Service {
     }
 
     /**
-     * Enables or disables notification on a give characteristic.
+     * Enables or disables notification on a given characteristic.
      *
      * @param characteristic Characteristic to act on.
      * @param enabled        If true, enable notification.  False otherwise.
@@ -438,13 +437,11 @@ public class PSoCBleRobotService extends Service {
 
     /**
      * Turn a motor on/off
-     *
-     //* @param angle to operate on
      * @param state turn motor on or off
      */
     public void setRobotState( boolean state) {
             RobotState = state;
-        updateGattAngle(state);
+        updateGattVelocity(state);
     }
 
 
@@ -454,40 +451,38 @@ public class PSoCBleRobotService extends Service {
      * be written into the GATT database unless the switch is
      * turned on.
      *
-     * @param angle to operate on
+     * @param velocity to operate on
      * @param value to set the motor to
      */
-    public void setAngle(Angle angle, int value) {
+    public void setVelocity(Velocity velocity, int value) {
         boolean state;
-        if(angle == Angle.PITCH)
+        if(velocity == Velocity.THROTTLE)
         {
-            pitchValue = value;
+            throttleValue = value;
             state = RobotState;
         } else  {
-            rollValue = value;
+            turnValue = value;
             state = RobotState;
         }
         // Update the Speed in the Gatt Database
-        updateGattAngle(state);
+        updateGattVelocity(state);
     }
 
     /**
      * Get the tach reading for one of the motors
-     *
-     * @param angle to operate on
+     * @param velocity to operate on
      * @return tach value
      */
-    public static int getTach(Angle angle) {
-        if (angle == Angle.PITCH) {
+    public static float getTach(Velocity velocity) {
+        if (velocity == Velocity.THROTTLE) {
             return angleTach;
-        } else { // Motor == RIGHT
+        } else {
             return speedTach;
         }
     }
 
     /**
      * This function returns the UUID of the motor service
-     *
      * @return the motor service UUID
      */
     public static UUID getMotorServiceUUID() {

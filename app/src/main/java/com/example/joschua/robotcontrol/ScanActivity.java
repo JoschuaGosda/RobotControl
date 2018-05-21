@@ -67,7 +67,7 @@ import java.util.UUID;
 /**
  * Activity for scanning and displaying BLE devices that match our service UUID
   */
-//@TargetApi(Build.VERSION_CODES.M) // This is needed so that we can use Marshmallow API calls                                  //mod
+//@TargetApi(Build.VERSION_CODES.M) // This is needed so that we can use Marshmallow API calls                                  
 public class ScanActivity extends AppCompatActivity {
 
     private final static String TAG = ScanActivity.class.getSimpleName();
@@ -243,6 +243,14 @@ public class ScanActivity extends AppCompatActivity {
         mBluetoothDevice.clear();
         mBleArrayAdapter.clear();
         mSwipeRefreshLayout.setRefreshing(false);
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_HOME);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     /**
