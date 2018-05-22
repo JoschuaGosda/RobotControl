@@ -49,15 +49,14 @@ import android.util.Log;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.UUID;
-
 /**
- * Service for managing connection and data communication with the BLE car
+ * Service for managing connection and data communication with the BLE service
  */
 public class PSoCBleRobotService extends Service {
 
     private final static String TAG = PSoCBleRobotService.class.getSimpleName();
 
-    public enum Velocity { THROTTLE, TURN }
+    public enum Velocity { THROTTLE, TURN , ANGLE, SPEED}
 
     private static BluetoothManager mBluetoothManager;
     private static BluetoothAdapter mBluetoothAdapter;
@@ -83,7 +82,7 @@ public class PSoCBleRobotService extends Service {
     private static BluetoothGattCharacteristic mTachAngleCharacteristic;
     private static BluetoothGattCharacteristic mTachSpeedCharacteristic;
 
-    // State (on/off), speed of the motors, and tach values
+    // State (on/off), values of the characteristics
     private static boolean RobotState;
     private static int throttleValue;
     private static int turnValue;
@@ -255,7 +254,6 @@ public class PSoCBleRobotService extends Service {
         }
     };
 
-
     /**
      * Sends a broadcast to the listener in the main activity.
      * @param action The type of action that occurred.
@@ -264,7 +262,6 @@ public class PSoCBleRobotService extends Service {
         final Intent intent = new Intent(action);
         sendBroadcast(intent);
     }
-
 
     /**
      * Initialize a reference to the local BluetoothActivity adapter.
@@ -325,9 +322,6 @@ public class PSoCBleRobotService extends Service {
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
         Log.i(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
-
-
-
         return true;
     }
 
@@ -358,7 +352,7 @@ public class PSoCBleRobotService extends Service {
     }
 
     /**
-     * Update the speed of the GATT database. the speed
+     * Update the characteristics of the GATT database. the velocity
      * value comes from the global variables turnValue or throttleValue which are
      * set by the setVelocity function.
      * @param state determines if motor is on or off
@@ -381,7 +375,6 @@ public class PSoCBleRobotService extends Service {
                 }
                 writeCharacteristic(mTurnCharacteristic);
             }
-            //Log.d(TAG, "Werte gesetzt! THROTTLE:" + throttleValue + "      TURN:" + turnValue);
         }
 
     /**
@@ -436,14 +429,12 @@ public class PSoCBleRobotService extends Service {
     }
 
     /**
-     * Turn a motor on/off
-     * @param state turn motor on or off
+     * @param state  Turn the communication on/off
      */
     public void setRobotState( boolean state) {
             RobotState = state;
         updateGattVelocity(state);
     }
-
 
     /**
      * Set the speed setting of one of the motors.
@@ -471,10 +462,10 @@ public class PSoCBleRobotService extends Service {
     /**
      * Get the tach reading for one of the motors
      * @param velocity to operate on
-     * @return tach value
+     * @return tach values
      */
     public static float getTach(Velocity velocity) {
-        if (velocity == Velocity.THROTTLE) {
+        if (velocity == Velocity.ANGLE) {
             return angleTach;
         } else {
             return speedTach;

@@ -6,7 +6,7 @@
 
     <string name="no_ble">BLE not supported</string>
 
-    <string name="app_name">Robot</string>
+    <string name="app_name">RemoteControl</string>
 
     <!-- Misc items -->
     <string name="zero">0</string>

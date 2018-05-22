@@ -18,7 +18,6 @@ import android.widget.Toast;
 
 public class myControlActivity extends AppCompatActivity {
 
-
     // Objects to access the layout items for Tach, Buttons, and Seek bars
     private static TextView mTachAngleText;
     private static TextView mTachSpeedText;
@@ -35,8 +34,6 @@ public class myControlActivity extends AppCompatActivity {
     private static String mDeviceAddress;
     private static PSoCBleRobotService mPSoCBleRobotService;
 
-
-
     /**
      * This manages the lifecycle of the BLE service.
      * When the service starts we get the service object, initialize the service, and connect.
@@ -52,8 +49,8 @@ public class myControlActivity extends AppCompatActivity {
                 Log.e(TAG, "Unable to initialize Bluetooth");
                 finish();
             }
-            // Automatically connects to the car database upon successful start-up initialization.
-            mPSoCBleRobotService.connect(mDeviceAddress); //by function connect the start values of THROTTLE and TURN are automatically set to 127 (==0)
+            // Automatically connects to the bluetooth characteristics upon successful start-up initialization.
+            mPSoCBleRobotService.connect(mDeviceAddress);
         }
 
         @Override
@@ -81,13 +78,14 @@ public class myControlActivity extends AppCompatActivity {
         // Bind to the BLE service
         Log.i(TAG, "Binding Service");
         Intent RobotServiceIntent = new Intent(this, PSoCBleRobotService.class);
-
         doBindService(RobotServiceIntent);
 
         /* This will be called when the  robot enable switch is changed */
         mEnableRobotSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                enableRobotSwitch(isChecked); //updates the stateFlag for sharing data
+                //updates the stateFlag for sharing data - isChecked --> data is written to the ble peripheral characteristic
+                enableRobotSwitch(isChecked);
+                //online flag is used to switch on/off the communication going to the peripheral device
                 online = isChecked;
             }
         });
@@ -96,20 +94,19 @@ public class myControlActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if(online) {
-                        mPSoCBleRobotService.setVelocity(PSoCBleRobotService.Velocity.THROTTLE, progress); //LEFT wird für Winkel benutzt
-                        //Log.d(TAG, "Desired THROTTLE chanced to:" + roundedTHROTTLE);
+                    //make the service write THROTTLE value to according peripheral characteristic if online
+                    mPSoCBleRobotService.setVelocity(PSoCBleRobotService.Velocity.THROTTLE, progress);
                     }
                 }
-
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
 
             }
 
-
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                //progress is indirectly set to zero after let go the SeekBar
                 mThrottleSeekBar.setProgress(127);
             }
         });
@@ -118,18 +115,18 @@ public class myControlActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (online) {
+                    //make the service write TURN value to according peripheral characteristic if online
                     mPSoCBleRobotService.setVelocity(PSoCBleRobotService.Velocity.TURN, progress);
                 }
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
             }
-
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                //progress is indirectly set to zero after let go the SeekBar
                 mTurnSeekBar.setProgress(127);
             }
         });
@@ -162,9 +159,12 @@ public class myControlActivity extends AppCompatActivity {
             Log.i(TAG, "Connect request result=" + result);
             Log.d(TAG, "Receiver registered!!");
         }
-        //doBindService(RobotServiceIntent);
     }
 
+    /**
+     * function has to be overwritten to unbindService if going to the last activity
+     * otherwise it won't be able to reconnect to the peripheral
+     */
     @Override
     public void onBackPressed() {
         super.onBackPressed();
@@ -191,16 +191,12 @@ public class myControlActivity extends AppCompatActivity {
     }
 
     /**
-     * Enable or disable the left/right motor
-     *
-     * @param isChecked used to enable/disable motor
-     //* @param angle is the motor to enable/disable (left or right)
+     * Enable or disable the communication
+     * @param isChecked used to enable/disable communication to the peripheral
      */
     private void enableRobotSwitch(boolean isChecked) {
         if (isChecked && connected && bound) {
             mPSoCBleRobotService.setRobotState(true);
-            //mPSoCBleRobotService.setVelocity(PSoCBleRobotService.Velocity.THROTTLE, 127);
-            //mPSoCBleRobotService.setVelocity(PSoCBleRobotService.Velocity.TURN, 127);
         }
         else if(connected && bound){
             mPSoCBleRobotService.setRobotState(false);
@@ -208,7 +204,7 @@ public class myControlActivity extends AppCompatActivity {
     }
 
     /**
-     * Handle broadcasts from the Car service object. The events are:
+     * Handle broadcasts from the segway service object. The events are:
      * ACTION_CONNECTED: connected to the segway.
      * ACTION_DISCONNECTED: disconnected from the segway.
      * ACTION_DATA_AVAILABLE: received data from the segway.  This can be a result of a read
@@ -222,8 +218,6 @@ public class myControlActivity extends AppCompatActivity {
             switch (action) {
                 case PSoCBleRobotService.ACTION_CONNECTED:
                     //Service discovery is started by the service.
-                    //Toast conntected = Toast.makeText(myControlActivity.this, "succesfully connected", Toast.LENGTH_LONG);
-                    //conntected.show();
                     break;
                 case PSoCBleRobotService.ACTION_DISCONNECTED:
                     Toast disconntected = Toast.makeText(myControlActivity.this, "disconnected - Service will be closed", Toast.LENGTH_LONG);
@@ -231,9 +225,9 @@ public class myControlActivity extends AppCompatActivity {
                     mPSoCBleRobotService.close();
                     break;
                 case PSoCBleRobotService.ACTION_DATA_AVAILABLE:
-                    // This is called after a Notify completes
-                    mTachAngleText.setText(String.format("%.2f", PSoCBleRobotService.getTach(PSoCBleRobotService.Velocity.THROTTLE)));
-                    mTachSpeedText.setText(String.format("%.2f", PSoCBleRobotService.getTach(PSoCBleRobotService.Velocity.TURN)));
+                    // This is called after a Notify completes - format %.2f for two decimals
+                    mTachAngleText.setText(String.format("%.2f", PSoCBleRobotService.getTach(PSoCBleRobotService.Velocity.ANGLE)));
+                    mTachSpeedText.setText(String.format("%.2f", PSoCBleRobotService.getTach(PSoCBleRobotService.Velocity.SPEED)));
                     break;
             }
         }

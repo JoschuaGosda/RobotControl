@@ -17,22 +17,23 @@ import android.widget.Toast;
 
 public class WelcomeActivity extends AppCompatActivity {
 
+    //SPLASH_TIME_OUT defines how long the animation is being showed
     private static int SPLASH_TIME_OUT = 6000;
     Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_welcome);
-
         context = WelcomeActivity.this;
 
+        //activate bluetooth for upcoming activity
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (!mBluetoothAdapter.isEnabled()) {
             mBluetoothAdapter.enable();
         }
 
+        //Handler to move on the next acitivty after SPLASH_TIME_OUT
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -41,7 +42,4 @@ public class WelcomeActivity extends AppCompatActivity {
             }
         }, SPLASH_TIME_OUT);
     }
-
-
-
 }
