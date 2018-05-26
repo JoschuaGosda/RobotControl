@@ -23,15 +23,15 @@ Used components:
 
 ### Arduino 101
 
-The arduino is programmed in *Arduino IDE* and runs the [MiniSegway.ino](https://github.com/JoschuaGosda/RobotControl/blob/master/MiniSegway.ino) file. Onboard are acceleration- and gyrosensors as well as a built-in BluetoothLowEnergy module. 
+The arduino is programmed in *Arduino IDE* and runs the [MiniSegway_PID.ino](https://github.com/JoschuaGosda/RobotControl/blob/master/MiniSegway_PID.ino) file. Onboard are acceleration- and gyrosensors as well as a built-in BluetoothLowEnergy module. 
 The sensor data is used to determine the angle of the segway using a Kalman Filter. It is then given to the feedback control to keep the segway upright by adjusting motor torque.
-To make sure that the segway isn't moving with constant speed while the angle remains zeros another feedback control is used to locate the position.
+To make sure that the segway isn't moving with constant speed while the angle remains zero another feedback control is used to locate the position.
 
 The controller scematic looks like followed:
 ![alt controller scmatic](https://github.com/JoschuaGosda/RobotControl/blob/master/contoller_scematic.PNG)
 
 It consists of an inner- and an outer-loop as a result that the segway is a SIMO-system (Single Input - Mulitiple Outputs) and [classical control](https://en.wikipedia.org/wiki/Classical_control_theory) is used.
-Dependending on the difference between  desired- and the actual values, the PID-controllers calculate an appropriate output.
+Dependending on the difference between  desired- and actual values, the PID-controllers calculate an appropriate output.
 Now, the idea behind all this is to remotely control the segway. Therefore the desired value for the outer-loop has to  be changed depending on user input. Otherwise the robot  would just stay at the same spot.
 
  For this task the arduino simultaneously acts as a bluetooth peripheral device which provides an bluetooth service hosting four characteristic to read, write and notify from (depending on the configuartion).
