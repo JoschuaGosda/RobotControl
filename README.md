@@ -1,12 +1,10 @@
-# MiniSegway
-
-This is the approach of a remote controlled MiniSegway that stabilises itself from falling over.
+# MiniSegway - An approach to a remotely controllable inverted pendulum
 
 ![alt remote control](https://github.com/JoschuaGosda/RobotControl/blob/master/IMGL9399.jpg)
 
 ## Getting Started
 
-This projects consists of an Arduino 101 and an smartphone running Android. While the Arduino is responsible for the feedback control and acting as a bluetooth peripheral at the same time, the Android Phone  allows the user to interact with the robot. 
+This projects implements a PID control for an inverted pendulum to a miniature segway. The control is realised using an Arduino 101 and further additional components (stated below). The miniature segway can be remotely controlled via Bluetooth Low Engergy using an Android phone's touchscreen interface. 
 
 Click [here](https://youtu.be/_MlyZ8UsYA4) to see the robot in action.
 
@@ -23,19 +21,9 @@ Used components:
 
 ### Arduino 101
 
-The arduino is programmed in *Arduino IDE* and runs the [MiniSegway_PID.ino](https://github.com/JoschuaGosda/RobotControl/blob/master/MiniSegway_PID.ino) file. Onboard are acceleration- and gyrosensors as well as a built-in BluetoothLowEnergy module. 
-The sensor data is used to determine the angle of the segway using a Kalman Filter. It is then given to the feedback control to keep the segway upright by adjusting motor torque.
-To make sure that the segway isn't moving with constant speed while the angle remains zero another feedback control is used to locate the position.
+The arduino is programmed in *Arduino IDE* and runs the [MiniSegway_PID.ino](https://github.com/JoschuaGosda/RobotControl/blob/master/MiniSegway_PID.ino) file. The tilting angle of the segway is estimated using a Kalman filter that fuses acceleration and gyroscope sensor data. The control consists of an inner- and an outer-loop for the segway's angle and position.
 
-The controller scematic looks like followed:
-![alt controller scmatic](https://github.com/JoschuaGosda/RobotControl/blob/master/contoller_scematic.PNG)
-
-It consists of an inner- and an outer-loop as a result that the segway is a SIMO-system (Single Input - Mulitiple Outputs) and [classical control](https://en.wikipedia.org/wiki/Classical_control_theory) is used.
-Dependending on the difference between  desired- and actual values, the PID-controllers calculate an appropriate output.
-Now, the idea behind all this is to remotely control the segway. Therefore the desired value for the outer-loop has to  be changed depending on user input. Otherwise the robot  would just stay at the same spot.
-
- For this task the arduino simultaneously acts as a bluetooth peripheral device which provides an bluetooth service hosting four characteristic to read, write and notify from (depending on the configuartion).
-In this project two characteritics are used to transmit the steering data for THROTTLE and TURN while the remaining two characteristics operate as a telemtry service.
+To send steer commands to the segway, the Arduino acts simultaneously as a bluetooth peripheral device hosting four characteristic to read, write and notify from (depending on the configuartion). Two characteritics are used to transmit the steering data for THROTTLE and TURN while the remaining two characteristics operate as a telemtry service.
     
 * *speedCharacteristic*     - Characteristic for holding the value for the desired speed. After proccessing it is integrated and used as an position setpoint going into the position control loop.
     
@@ -50,11 +38,10 @@ Each characteristic is an 8-bit char, so it can hold values from 0 to 255. Depen
 
 ### Android Smartphone
 
-The app running on the phone is developed in *Android Studio*. It connects to the arduino board over a bluetooth connection to share steer commands as well as to show telemtry data. 
-For opening the bluetooth connection an android service is running in the background and handles the [GATT](https://www.bluetooth.com/specifications/gatt/generic-attributes-overview) calls. Please see the solution of [Cypress Semiconductor Corporation](https://github.com/cypresssemiconductorco) that worked out very well and is the backbone of the bluetooth communication in this app.
+For opening the bluetooth connection an android service is running in the background and handles the [GATT](https://www.bluetooth.com/specifications/gatt/generic-attributes-overview) calls. See the solution of [Cypress Semiconductor Corporation](https://github.com/cypresssemiconductorco) that worked out very well and is the backbone of the bluetooth communication in this app.
 
-The controlling surface in the app is very basic. Two SeekBars are used to change the THROTTLE and TURN setpoints.
-After a successfully connect to the arduino board, the desired values are written in the corresponding BLE Characteristic. 
+The control interface consists of two SeekBars that are used to change the THROTTLE and TURN setpoints.
+After a successful connect to the Arduino, the desired values are written in the corresponding BLE Characteristic. 
 
 ![alt remote control](https://github.com/JoschuaGosda/RobotControl/blob/master/Remote_Control.jpg)
 
